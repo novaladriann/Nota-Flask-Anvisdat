@@ -33,7 +33,9 @@ def create_app(config=None):
     @app.get("/api/state")
     def state():
         records = store.sales(db())
-        return jsonify(products=[dict(r) for r in db().execute("SELECT * FROM product")], sales=records, forecast=forecast(records, horizon=30))
+        from .charts import figures
+        projection = forecast(records, horizon=30)
+        return jsonify(figures=figures(records, projection), products=[dict(r) for r in db().execute("SELECT * FROM product")], sales=records, forecast=projection)
 
     @app.post("/api/sales")
     @app.route("/api/sales/<int:sale_id>",methods=["PUT","DELETE"])

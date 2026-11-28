@@ -37,4 +37,4 @@ def forecast(sales, horizon=7):
     final = fit(values, start)
     return dict(days=n, end=end.isoformat(), mae=round(mae), baseline=round(baseline),
                 testStart=(end-timedelta(days=6)).isoformat(),
-                future=[dict(date=(start+timedelta(days=i)).isoformat(), amount=final(i)) for i in range(n, n + horizon)])
+                future=[dict(date=(start+timedelta(days=i)).isoformat(), amount=final(i)) for i in range(n,n+horizon)])

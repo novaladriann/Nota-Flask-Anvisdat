@@ -26,18 +26,3 @@ export const amount = sale=>sale.items.reduce((a,i)=>a+i.qty*i.price,0);
 export const receipt = id=>'NT-'+String(id).padStart(5,'0');
 export const categoryIcon = {'Buku':'book','Alat tulis':'pen','Kertas':'paper','Arsip':'folder'};
 export const longDate = d=>dateFmt(d,{day:'numeric',month:'long',year:'numeric'});
-export function chart(points, desc) {
-  if (!points.length) return '<p class="empty">Belum ada data pada periode ini.</p>';
-  const peak=Math.max(1,...points.map(p=>p.amount)), unit=10**Math.floor(Math.log10(peak));
-  const top=Math.ceil(peak/(unit/2))*(unit/2);
-  const x=i=>5+(i/Math.max(1,points.length-1))*690, y=v=>12+138*(1-v/top);
-  const line=points.map((p,i)=>[x(i),y(p.amount)].join(',')).join(' ');
-  const ticks=[0,1,2,3].map(j=>Math.round(top*(1-j/3)));
-  const compact=v=>v>=1e6?num(Math.round(v/1e4)/100)+' jt':v>=1e3?num(Math.round(v/100)/10)+' rb':num(v);
-  const labels=[...new Set([0,Math.round((points.length-1)/3),Math.round((points.length-1)*2/3),points.length-1])];
-  return '<div class="plot"><div class="yticks">'+ticks.map(v=>'<span>'+compact(v)+'</span>').join('')+'</div><svg role="img" aria-label="'+esc(desc)+'" viewBox="0 0 700 163" preserveAspectRatio="none"><defs><linearGradient id="wash" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#43a481" stop-opacity=".22"/><stop offset="1" stop-color="#43a481" stop-opacity=".015"/></linearGradient></defs>'+
-    ticks.map((_,i)=>'<path d="M0 '+(12+i*46)+'H700" stroke="#d8e1dc" stroke-dasharray="4 5"/>').join('')+
-    '<polygon points="5,150 '+line+' 695,150" fill="url(#wash)"/><polyline points="'+line+'" stroke="#25785d" fill="none" stroke-width="2.7" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>'+
-    '</svg><div class="xticks">'+labels.map(i=>'<span>'+dateFmt(points[i].date)+'</span>').join('')+'</div></div>'+
-    '<details class="chart-data"><summary>Data grafik</summary><div class="scroll"><table><thead><tr><th>Tanggal</th><th>Omzet</th></tr></thead><tbody>'+points.map(p=>'<tr><td>'+longDate(p.date)+'</td><td>'+money(p.amount)+'</td></tr>').join('')+'</tbody></table></div></details>';
-}

@@ -1,6 +1,6 @@
 import {shift,amount,today} from './ui.js';
 const demo = document.documentElement.dataset.preview === 'true';
-let cached, connection;
+let cached, connection, figures;
 function requestResult(request) {
   return new Promise((resolve,reject)=>{request.onsuccess=()=>resolve(request.result); request.onerror=()=>reject(request.error);});
 }
@@ -8,6 +8,7 @@ async function database() {
   if (connection) return connection;
   const seed = await fetch('/seed.json').then(r=>{if(!r.ok) throw Error('Data contoh gagal dimuat.');return r.json();});
   cached=seed.products;
+  figures=seed.figures;
   const open=indexedDB.open('nota-aksara-v1',1);
   open.onupgradeneeded=()=>{
     const table=open.result.createObjectStore('sales',{keyPath:'id',autoIncrement:true});
@@ -46,7 +47,15 @@ export async function load() {
     return response.json();
   }
   const db=await database(), sales=await requestResult(db.transaction('sales').objectStore('sales').getAll());
-  return {products:cached,sales,forecast:localForecast(sales)};
+  const forecast=localForecast(sales);
+  // Demo edits live in IndexedDB. Keep the original Express layout and update its data.
+  const totals = new Map();
+  for (const sale of sales) totals.set(sale.date,(totals.get(sale.date)||0)+amount(sale));
+  const last = [...totals.keys()].sort().at(-1) || today();
+  const dates = Array.from({length:90}, (_,i)=>shift(last,i-89));
+  Object.assign(figures.history.data[0], {x:dates, y:dates.map(day=>totals.get(day)||0)});
+  Object.assign(figures.forecast.data[0], {x:forecast?.future.map(p=>p.date)||[], y:forecast?.future.map(p=>p.amount)||[]});
+  return {products:cached, sales, forecast, figures};
 }
 export async function persist(method,data,id) {
   if(!demo) {

@@ -9,7 +9,8 @@ class HttpTest(unittest.TestCase):
             config={"TESTING":True,"DATABASE":str(Path(directory)/"sales.db")}
             client=create_app(config).test_client()
             self.assertEqual(client.get("/").status_code,200)
-            self.assertEqual(client.get("/static/app.js").status_code,200)
+            with client.get("/static/app.js") as script:
+                self.assertEqual(script.status_code,200)
             state=client.get("/api/state").get_json()
             payload=dict(date=state["forecast"]["end"],payment="QRIS",items=[dict(product="BK01",qty=2)])
             result=client.post("/api/sales",json=payload)

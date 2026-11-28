@@ -65,3 +65,25 @@ class ForecastTest(unittest.TestCase):
         f=forecast([rows[0],rows[-1]])
         self.assertEqual(f["days"],35)
         self.assertEqual(len(f["future"]),7)
+
+
+class InteractiveChartsTest(unittest.TestCase):
+    def test_daily_series_matches_receipts(self):
+        from nota.charts import figures
+        sales = seed_sales()
+        projection = forecast(sales, horizon=30)
+        charts = figures(sales, projection)
+        series = charts["history"]["data"][0]
+        last = max(s["date"] for s in sales)
+        expected = sum(i["qty"]*i["price"] for s in sales if s["date"]==last for i in s["items"])
+        self.assertEqual(len(series["x"]),90)
+        self.assertEqual((series["x"][-1],series["y"][-1]),(last,expected))
+        future = charts["forecast"]["data"][0]
+        self.assertEqual(len(future["x"]),30)
+        self.assertEqual(future["y"],[p["amount"] for p in projection["future"]])
+        self.assertEqual(projection["mae"], forecast(sales)["mae"])
+
+    def test_empty_charts(self):
+        from nota.charts import figures
+        for fig in figures([],None).values():
+            self.assertTrue(all(not t["x"] for t in fig["data"]))
